@@ -4,8 +4,8 @@
 A QR-based digital restaurant menu with real-time order management.
 
 ## 👨‍💻 Developed By
-- Devendra Sakpal
-- Bharat Patel
+- Bharat Gurudev Patel
+- Devendra Babu Sakpal
 
 ## 🔧 Technologies Used
 - HTML, CSS, JavaScript
@@ -32,9 +32,3 @@ A QR-based digital restaurant menu with real-time order management.
 - Fully responsive UI
 - Works on all modern browsers
 
-## 🌐 Live Demo
-Customer Menu:
-https://devendra-sakpal.github.io/digital-menu/E-Menu.html
-
-Admin Panel:
-https://devendra-sakpal.github.io/digital-menu/admin_log.html
