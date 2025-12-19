@@ -63,20 +63,9 @@ async function getNextOrderNumber() {
 // ------------------ Cart management ------------------
 function addToCart(itemName, price) {
     if (!itemName || isNaN(price)) return;
-
-    // 🔑 CHECK: item already exists?
-    if (cart[itemName]) {
-        cart[itemName].quantity++;   // quantity increase
-        updateCart();
-        return; // ❌ NO POPUP
-    }
-
-    // ✅ FIRST TIME ADD
-    cart[itemName] = { price: Number(price), quantity: 1 };
+    if (!cart[itemName]) cart[itemName] = { price: Number(price), quantity: 0 };
+    cart[itemName].quantity++;
     updateCart();
-
-    // 🔔 popup ONLY for first add
-     showToast(`🛒 ${itemName} added to cart`);
 }
 
 function removeFromCart(itemName) {
@@ -614,17 +603,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-function showToast(message) {
-    const toast = document.getElementById("toast");
-    if (!toast) return;
 
-    toast.innerText = message;
-    toast.style.visibility = "visible";
-    toast.style.opacity = "1";
-
-    setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.visibility = "hidden";
-    }, 1000); // 👈 ONLY 1 second
-}
 
