@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -187,6 +186,7 @@
 .status-pending { background: #ffeeba; color: #856404; }  /* unavailable */
 .status-completed { background: #cce5ff; color: #004085; }
 
+
 /* CENTER ALIGN PAYMENT TABLE */
 #payments table th,
 #payments table td {
@@ -194,7 +194,6 @@
     vertical-align: middle;
 }
  
-
 
 
     </style>
@@ -255,7 +254,7 @@
                     <tr>
                         <th>Order #</th>
                         <th>Customer</th>
-                        <th>Table No</th>   <!-- ✅ ADD -->
+                         <th>Table No</th>   <!-- ✅ ADD -->
                         <th>Items</th>
                         <th>Total</th>
                         <th>Time</th>
@@ -380,7 +379,7 @@
                     <tr>
                         <th>Order #</th>
                         <th>Customer</th>
-                        <th>Table No</th>   <!-- ✅ ADD -->
+                         <th>Table No</th>   <!-- ✅ ADD -->
                         <th>Items</th>
                         <th>Total</th>
                         <th>Paid</th>
@@ -765,7 +764,7 @@ function renderRecentOrders() {
         row.innerHTML = `
             <td>${o.orderNumber}</td>
             <td>${o.customerName || "Customer"}</td>
-             <td>${o.tableNumber || "-"}</td>   <!-- ✅ TABLE NO -->
+            <td>${o.tableNumber || "-"}</td>   <!-- ✅ TABLE NO -->
             <td>${items}</td>
             <td>₹${o.total}</td>
             <td>${o.date}</td>
@@ -921,4 +920,3 @@ window.onclick = e => {
 
 </body>
 </html>
-
