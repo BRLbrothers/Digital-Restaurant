@@ -193,11 +193,21 @@
     text-align: center;
     vertical-align: middle;
 }
+
+#reports input, #reports select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
  
 
 
     </style>
 </head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <body>
 
 <div class="dashboard-container">
@@ -431,28 +441,81 @@
 
         <!-- REPORTS SECTION -->
         <div id="reports" class="content-section hidden">
-            <h2 class="section-title">Reports & Analytics</h2>
-            <p>(Static sample data – you can expand this later)</p>
+           <h2 class="section-title">Reports & Analytics</h2>
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Category</th>
-                        <th>Orders</th>
-                        <th>Revenue</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>Burger</td><td>Main</td><td>32</td><td>₹540</td></tr>
-                    <tr><td>Pizza</td><td>Main</td><td>28</td><td>₹620</td></tr>
-                    <tr><td>Cold Coffee</td><td>Beverages</td><td>24</td><td>₹300</td></tr>
-                </tbody>
-            </table>
+<!-- REPORT FILTER -->
+<input 
+  type="text"
+  id="reportInput"
+  placeholder="YYYY or YYYY-MM or YYYY-MM-DD"
+  style="padding:10px;width:240px"
+/>
+
+<button class="btn btn-primary" onclick="generateReport()">
+  Generate
+</button>
+
+<button class="btn btn-success" onclick="downloadReportPDF()">
+  Download PDF
+</button>
+
+
+
+
+<!-- Analytics -->
+<div class="stats-grid">
+
+  <div class="stat-card">
+    <div class="stat-number" id="repOrders">0</div>
+    <div class="stat-label">Total Orders</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-number" id="repRevenue">₹0</div>
+    <div class="stat-label">Total Revenue</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-number" id="repQty">0</div>
+    <div class="stat-label">Total Quantity Sold</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-number" id="repTopItem">-</div>
+    <div class="stat-label">Top Selling Item</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-number" id="repPeriod">-</div>
+    <div class="stat-label">Report Period</div>
+  </div>
+
+</div>
+
+
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Order #</th>
+      <th>Customer</th>
+      <th>Table</th>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Total</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody id="reportTable"></tbody>
+</table>
+
+
         </div>
 
     </div>
 </div>
+
+
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -916,6 +979,225 @@ window.onclick = e => {
         if (e.target === m) m.style.display = "none";
     });
 };
+
+function filterOrders() {
+    const selectedStatus = document.getElementById("orderStatusFilter").value;
+    const rows = document.querySelectorAll("#ordersList tr");
+
+    rows.forEach(row => {
+        const statusBadge = row.querySelector(".status-badge");
+        if (!statusBadge) return;
+
+        const statusText = statusBadge.textContent.trim().toLowerCase();
+
+        if (selectedStatus === "" || statusText === selectedStatus) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+
+function searchOrders() {
+    const query = document.getElementById("orderSearchBox").value.toLowerCase();
+    const rows = document.querySelectorAll("#ordersList tr");
+
+    rows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        row.style.display = rowText.includes(query) ? "" : "none";
+    });
+}
+
+//------------------------ report section ---------------------------
+
+document.getElementById("reportType").addEventListener("change", function () {
+    const type = this.value;
+    document.getElementById("monthPicker").style.display = type === "monthly" ? "block" : "none";
+    document.getElementById("yearPicker").style.display = type === "yearly" ? "block" : "none";
+});
+
+function generateReport() {
+  const input = document.getElementById("reportInput").value.trim();
+  if (!input) {
+    alert("Enter Year / Month / Date (YYYY or YYYY-MM or YYYY-MM-DD)");
+    return;
+  }
+
+  let totalOrders = 0;
+  let revenue = 0;
+  let totalQty = 0;
+
+  let itemMap = {}; // { itemName: totalQty }
+
+  reportTable.innerHTML = "";
+
+  Object.values(ordersCache).forEach(o => {
+    if (!o.date && !o.createdAt) return;
+
+    // Handle Firestore Timestamp + string date
+    const d = o.createdAt?.toDate
+      ? o.createdAt.toDate()
+      : new Date(o.date);
+
+    if (isNaN(d)) return;
+
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    const orderDateStr = `${y}-${m}-${day}`;
+
+    let match = false;
+
+    // YEAR → 2025
+    if (/^\d{4}$/.test(input)) {
+      match = y == input;
+    }
+    // MONTH → 2025-12
+    else if (/^\d{4}-\d{2}$/.test(input)) {
+      match = `${y}-${m}` === input;
+    }
+    // DATE → 2025-12-30
+    else if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+      match = orderDateStr === input;
+    }
+
+    if (!match) return;
+
+    // COUNT ORDER
+    totalOrders++;
+    revenue += Number(o.total || 0);
+
+    // ITEM + QTY
+    let itemsText = "-";
+    let orderQty = 0;
+
+    if (o.cart) {
+      itemsText = Object.entries(o.cart)
+        .map(([name, data]) => {
+          const q = Number(data.quantity || 0);
+          orderQty += q;
+          totalQty += q;
+
+          itemMap[name] = (itemMap[name] || 0) + q;
+
+          return `${name} × ${q}`;
+        })
+        .join(", ");
+    }
+
+    // ONE ROW PER ORDER (NO DUPLICATE)
+    reportTable.innerHTML += `
+      <tr>
+        <td>${o.orderNumber || "-"}</td>
+        <td>${o.customerName || "Customer"}</td>
+        <td>${o.tableNumber || "-"}</td>
+        <td>${itemsText}</td>
+        <td>${orderQty}</td>
+        <td>₹${Number(o.total || 0).toFixed(2)}</td>
+        <td>${orderDateStr}</td>
+      </tr>
+    `;
+  });
+
+  // SUMMARY CARDS
+  document.getElementById("repOrders").textContent = totalOrders;
+  document.getElementById("repRevenue").textContent = "₹" + revenue.toFixed(2);
+  document.getElementById("repQty").textContent = totalQty;
+  
+  // TOP SELLING ITEM
+  let topItem = "-";
+  let maxQty = 0;
+
+  Object.entries(itemMap).forEach(([name, qty]) => {
+    if (qty > maxQty) {
+      maxQty = qty;
+      topItem = `${name} (${qty})`;
+    }
+  });
+
+  document.getElementById("repTopItem").textContent = topItem;
+  document.getElementById("repPeriod").textContent = input;
+}
+
+
+
+//pdf download
+
+function downloadReportPDF() {
+
+  // 🔹 Create temporary container for PDF
+  const wrapper = document.createElement("div");
+  wrapper.style.padding = "20px";
+  wrapper.style.fontFamily = "Arial";
+
+  // 🔹 Get values from report cards / generateReport()
+  const totalOrders = document.getElementById("repOrders").textContent;
+  const totalRevenue = document.getElementById("repRevenue").textContent;
+const totalQty = document.getElementById("repQty")?.textContent || "0";
+  const topItem = document.getElementById("repTopItem")?.textContent || "-";
+  const period = document.getElementById("reportInput").value || "-";
+
+  // 🔹 Heading + Summary
+  const heading = `
+    <h1 style="text-align:center;margin-bottom:5px;">
+      YOUR RESTAURANT NAME
+    </h1>
+
+    <p style="text-align:center;font-size:14px;margin-bottom:10px;">
+      Sales Report
+    </p>
+
+    <p style="text-align:center;font-size:12px;color:#555;">
+      Report Period: <strong>${period}</strong>
+    </p>
+
+    <hr/>
+
+    <div style="display:flex;justify-content:space-between;margin:10px 0;font-size:13px;">
+      <strong>Total Orders: ${totalOrders}</strong>
+      <strong>Total Revenue: ${totalRevenue}</strong>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-bottom:15px;font-size:13px;">
+      <strong>Total Quantity Sold: ${totalQty}</strong>
+      <strong>Top Selling Item: ${topItem}</strong>
+    </div>
+  `;
+
+  wrapper.innerHTML = heading;
+
+  // 🔹 Clone report table
+  const table = document.querySelector("#reports table").cloneNode(true);
+
+  // 🔧 Fix table width for PDF
+  table.style.width = "100%";
+  table.style.tableLayout = "fixed";
+
+  table.querySelectorAll("th, td").forEach(td => {
+    td.style.wordBreak = "break-word";
+    td.style.fontSize = "12px";
+  });
+
+  // 🔧 Date column width fix
+  table.querySelectorAll("th:last-child, td:last-child").forEach(col => {
+    col.style.width = "90px";
+    col.style.whiteSpace = "nowrap";
+  });
+
+  wrapper.appendChild(table);
+
+  // 🔹 Generate PDF
+  html2pdf().set({
+    margin: 10,
+    filename: "Restaurant_Report.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }
+  }).from(wrapper).save();
+}
+
+
 </script>
 
 </body>
