@@ -618,7 +618,7 @@ function startMenuListener() {
 
 function startOrdersListener() {
     db.collection("orders")
-      .orderBy("date", "desc")
+      .orderBy("createdAt", "desc")
       .onSnapshot(snapshot => {
         snapshot.docChanges().forEach(change => {
             const docId = change.doc.id;
@@ -818,16 +818,49 @@ function renderRecentOrders() {
     const tbody = recentOrdersList;
     tbody.innerHTML = "";
 
-    Object.values(ordersCache).slice(0, 5).forEach(o => {
+    const today = new Date();
+    const todayStr = today.toDateString();
+
+    // Filter only today's orders
+    const todaysOrders = Object.values(ordersCache).filter(o => {
+        if (!o.createdAt && !o.date) return false;
+
+        let orderDate;
+
+        if (o.createdAt?.toDate) {
+            orderDate = o.createdAt.toDate();
+        } else {
+            orderDate = new Date(o.date);
+        }
+
+        return orderDate.toDateString() === todayStr;
+    });
+
+    if (todaysOrders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;">
+                    No Orders Today
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // show all today's orders
+    todaysOrders.forEach(o => {
+
         const items = o.cart
-            ? Object.keys(o.cart).map(i => `${i} × ${o.cart[i].quantity}`).join(", ")
+            ? Object.keys(o.cart)
+                .map(i => `${i} × ${o.cart[i].quantity}`)
+                .join(", ")
             : "-";
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${o.orderNumber}</td>
             <td>${o.customerName || "Customer"}</td>
-            <td>${o.tableNumber || "-"}</td>   <!-- ✅ TABLE NO -->
+            <td>${o.tableNumber || "-"}</td>
             <td>${items}</td>
             <td>₹${o.total}</td>
             <td>${o.date}</td>
@@ -1199,6 +1232,6 @@ const totalQty = document.getElementById("repQty")?.textContent || "0";
 
 
 </script>
-
 </body>
+
 </html>
