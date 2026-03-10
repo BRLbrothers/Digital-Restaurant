@@ -405,6 +405,28 @@ async function placeOrder(){
         // remove previous handlers to avoid duplicates
         confirmBtn.onclick = null;
         confirmBtn.onclick = function(){
+
+             // -------- CUSTOMER INPUT VALIDATION --------
+    const name = document.getElementById("customerName").value.trim();
+    const contact = document.getElementById("contactNumber").value.trim();
+    const table = document.getElementById("tableNumber").value.trim();
+
+    if (!/^[A-Za-z\s]+$/.test(name)) {
+        alert("Please enter valid name (letters only)");
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(contact)) {
+        alert("Please enter valid 10 digit mobile number");
+        return;
+    }
+
+    if (!/^[0-9]+$/.test(table)) {
+        alert("Table number must contain only numbers");
+        return;
+    }
+
+
            // --- Step 1: Validate partial payment if needed ---
     if (paymentType === "partial") {
         const partialAmountInput = document.getElementById("partialAmount");
