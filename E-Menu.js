@@ -273,6 +273,7 @@ function loadMenuFromFirebase(){
                   }
                   container.appendChild(createMenuCard(item));
               });
+              document.getElementById("loadingScreen").style.display = "none";
               menuItems = list;
               // show appetizers by default if nothing active
               showCategory('appetizers');
