@@ -209,14 +209,6 @@
     <input id="tableNumber" name="table_no_fake" type="text" autocomplete="off" placeholder="Enter table number"
       style="width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:8px;" required>
 
-    <label><strong>Payment Method:</strong></label>
-    <select id="paymentMethod"
-      style="width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:8px;">
-        <option value="upi">UPI</option>
-        <option value="card">Card</option>
-        <option value="cash">Cash</option>
-    </select>
-
     <button id="confirmPaymentBtn"
       style="width:100%; padding:12px; margin-top:15px; background:#28a745; color:white; border:none;
             border-radius:10px; font-size:18px; cursor:pointer;">
@@ -293,7 +285,10 @@
 </script>
 
 
-    <!-- ========== YOUR EXTERNAL JS FILE (MAIN LOGIC) ========== -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>    
+<!-- ========== YOUR EXTERNAL JS FILE (MAIN LOGIC) ========== -->
     <script src="E-Menu.js"></script>
 
 
