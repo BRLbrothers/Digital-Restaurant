@@ -191,8 +191,7 @@ function generateBill(order){
             <strong>Payment Type:</strong> ${order.paymentType === "full" ? "Full Payment" : "Partial Payment"}<br>
             <strong>Amount Paid:</strong> ${formatRupee(order.amountPaid)}<br>
             <strong>Remaining:</strong> ${formatRupee(order.remaining)}<br>
-            <strong>Status:</strong> ${status}<br>
-            <strong>Payment Method:</strong> ${order.paymentMethod || "-"}<br><br>
+            <strong>Status:</strong> ${status}<br><br>
 
             <div style="text-align:center;opacity:0.8;">${order.date}</div>
         `;
@@ -208,31 +207,6 @@ function viewPreviousOrder(){
     generateBill(lastOrder);
     openBill();
 }
-
-// Download bill — safe attach
-(function attachDownloadHandler(){
-    const btn = document.getElementById("downloadBillBtn");
-    if (!btn) return;
-    btn.addEventListener("click", () => {
-        const billCard = document.querySelector(".bill-content") || document.querySelector(".bill-content");
-        if (!billCard) return alert("Bill area not found");
-        // temporarily remove transform/position if any
-        const orig = { transform: billCard.style.transform, position: billCard.style.position, top: billCard.style.top, left: billCard.style.left };
-        billCard.style.transform = "none"; billCard.style.position = "static"; billCard.style.top = "0"; billCard.style.left = "0";
-
-        html2canvas(billCard, { scale:3, backgroundColor: "#ffffff" }).then(canvas => {
-            const link = document.createElement("a");
-            link.download = "Order_Bill.png";
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-            // restore
-            billCard.style.transform = orig.transform;
-            billCard.style.position = orig.position;
-            billCard.style.top = orig.top;
-            billCard.style.left = orig.left;
-        }).catch(err => console.error("html2canvas failed:", err));
-    });
-})();
 
 // ------------------ Menu rendering ------------------
 function createMenuCard(item){
@@ -366,7 +340,6 @@ async function placeOrder(){
         const customerName = (document.getElementById("customerName") && document.getElementById("customerName").value) || "Customer";
         const contactNumber = (document.getElementById("contactNumber") && document.getElementById("contactNumber").value) || "-";
         const tableNumber = (document.getElementById("tableNumber") && document.getElementById("tableNumber").value) || "-";
-        const paymentMethod = (document.getElementById("paymentMethod") && document.getElementById("paymentMethod").value) || "upi";
 
        const orderNumber = await getNextOrderNumber();
 
@@ -377,7 +350,6 @@ async function placeOrder(){
             contactNumber,
             tableNumber,
             paymentType,
-            paymentMethod,
             amountPaid,
             remaining,
             total,
@@ -394,7 +366,6 @@ async function placeOrder(){
             contactNumber: order.contactNumber,
             tableNumber: order.tableNumber,
             paymentType: order.paymentType,
-            paymentMethod: order.paymentMethod,
             total: order.total,
             partialAmount: order.amountPaid,
             remaining: order.remaining,
@@ -629,3 +600,30 @@ function showToast(message) {
     }, 1000); // 👈 ONLY 1 second
 }
 
+document.getElementById("downloadBillBtn").addEventListener("click", downloadBill);
+
+function downloadBill() {
+
+    const billElement = document.querySelector("#billModal .bill-content");
+
+    if (!billElement) {
+        alert("Bill not found!");
+        return;
+    }
+
+    html2canvas(billElement, {
+        scale: 3,
+        backgroundColor: "#ffffff"
+    }).then(canvas => {
+
+        const link = document.createElement("a");
+        link.download = "Order_Bill.png";
+        link.href = canvas.toDataURL("image/png");
+
+        link.click();
+
+    }).catch(err => {
+        console.error("Download failed:", err);
+    });
+
+}
